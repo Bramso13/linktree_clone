@@ -6,7 +6,7 @@ import { authOptions } from "@/lib/auth";
 // GET /api/v1/shops/[id]/links/[linkId]
 export async function GET(
   request: Request,
-  context: { params: { id: string; linkId: string } }
+  context: { params: Promise<{ id: string; linkId: string }> }
 ) {
   const { id, linkId } = await context.params;
   try {
@@ -58,8 +58,9 @@ export async function GET(
 // PUT /api/v1/shops/[shopId]/links/[linkId]
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string; linkId: string } }
+  props: { params: Promise<{ id: string; linkId: string }> }
 ) {
+  const params = await props.params;
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -124,8 +125,9 @@ export async function PUT(
 // DELETE /api/v1/shops/[shopId]/links/[linkId]
 export async function DELETE(
   request: Request,
-  { params }: { params: { shopId: string; linkId: string } }
+  props: { params: Promise<{ shopId: string; linkId: string }> }
 ) {
+  const params = await props.params;
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {

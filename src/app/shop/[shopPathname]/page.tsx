@@ -17,11 +17,12 @@ const generateMetadata = async ({
   };
 };
 
-export default async function ShopPage({
-  params,
-}: {
-  params: { shopPathname: string };
-}) {
+export default async function ShopPage(
+  props: {
+    params: Promise<{ shopPathname: string }>;
+  }
+) {
+  const params = await props.params;
   return (
     <ShopProvider shopPathname={params.shopPathname}>
       <ShopViewer />

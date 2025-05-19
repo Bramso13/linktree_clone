@@ -20,10 +20,8 @@ const updateStyleComponentSchema = z.object({
 });
 
 // POST /api/v1/shops/:id/styles
-export async function POST(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function POST(req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -109,10 +107,8 @@ export async function POST(
 }
 
 // GET /api/v1/shops/:id/styles/:styleId
-export async function GET(
-  req: Request,
-  { params }: { params: { id: string; styleId: string } }
-) {
+export async function GET(req: Request, props: { params: Promise<{ id: string; styleId: string }> }) {
+  const params = await props.params;
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -201,10 +197,8 @@ export async function GET(
 }
 
 // PUT /api/v1/shops/:id/styles/:styleId
-export async function PUT(
-  req: Request,
-  { params }: { params: { id: string; styleId: string } }
-) {
+export async function PUT(req: Request, props: { params: Promise<{ id: string; styleId: string }> }) {
+  const params = await props.params;
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -310,10 +304,8 @@ export async function PUT(
 }
 
 // DELETE /api/v1/shops/:id/styles/:styleId
-export async function DELETE(
-  req: Request,
-  { params }: { params: { id: string; styleId: string } }
-) {
+export async function DELETE(req: Request, props: { params: Promise<{ id: string; styleId: string }> }) {
+  const params = await props.params;
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
