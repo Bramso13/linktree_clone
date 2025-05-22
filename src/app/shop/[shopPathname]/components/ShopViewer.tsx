@@ -2,13 +2,70 @@
 import { useShop } from "../../context/ShopContext";
 import { StyleComponent, Link } from "@prisma/client";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 const ShopViewer = () => {
   const { shop, isLoading, error, links } = useShop();
+  const router = useRouter();
+
+  useEffect(() => {
+    // Enregistrer une vue pour la boutique au chargement
+    if (shop) {
+      fetch("/api/v1/views", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          shopId: shop.id,
+          type: "page_view",
+        }),
+      }).catch((error) => {
+        console.error("Erreur lors de l'enregistrement de la vue:", error);
+      });
+    }
+  }, [shop]);
 
   if (isLoading) return <div>Chargement...</div>;
   if (error) return <div>Erreur: {error}</div>;
-  if (!shop) return <div>Boutique non trouvée</div>;
+  if (!shop) return <div>Chargement...</div>;
+
+  const handleLinkClick = async (component: StyleComponent) => {
+    console.log(links);
+    if (links && links.length > 0) {
+      const linkId = (component.details as any)?.linkId;
+      if (!linkId) return;
+
+      const link = links.find((l) => l.id === linkId);
+      if (!link) return;
+
+      // Enregistrer une vue pour le lien
+      try {
+        await fetch("/api/v1/views", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            linkId: link.id,
+            shopId: shop.id,
+            type: "link_click",
+          }),
+        });
+      } catch (error) {
+        console.error(
+          "Erreur lors de l'enregistrement de la vue du lien:",
+          error
+        );
+      }
+
+      if (link.paid) {
+        router.push(`/shop/${shop.pathName}/payment/${link.id}`);
+      } else {
+        window.open(link.url, "_blank", "noopener,noreferrer");
+      }
+    }
+  };
 
   const renderStyleComponent = (component: StyleComponent) => {
     switch (component.name) {
@@ -22,21 +79,11 @@ const ShopViewer = () => {
               fontWeight: (component.details as any)?.fontWeight || "normal",
               color: (component.details as any)?.color || "#000000",
               textAlign: (component.details as any)?.alignment || "left",
+              cursor: "pointer",
             }}
+            onClick={() => handleLinkClick(component)}
           >
-            <a
-              href={
-                links.length > 0
-                  ? links.find(
-                      (link) => link.id === (component.details as any)?.linkId
-                    )?.url
-                  : ""
-              }
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {(component.details as any)?.text}
-            </a>
+            {(component.details as any)?.text}
           </div>
         );
       default:

@@ -10,31 +10,23 @@ type ShopWithComponents = Shop & {
   styleComponents: StyleComponent[];
 };
 
-interface ShopEditorProps {
-  onSave: (shopData: Partial<Shop>) => Promise<void>;
-}
-
-const ShopEditor = ({ onSave }: ShopEditorProps) => {
-  const { shop, setShop } = useNavigation();
-  const [formData, setFormData] = useState({
-    name: "",
-    pathName: "",
-    description: "",
-    images: [] as Prisma.JsonArray,
-  });
+const ShopEditor = () => {
+  const { shop } = useNavigation();
 
   const [styleComponents, setStyleComponents] = useState<StyleComponent[]>([]);
   const [editingComponent, setEditingComponent] = useState<string | null>(null);
+  const [selectedComponent, setSelectedComponent] =
+    useState<StyleComponent | null>(null);
+
+  useEffect(() => {
+    if (selectedComponent) {
+      //console.log(selectedComponent, "selectedComponent");
+    }
+  }, [selectedComponent]);
 
   useEffect(() => {
     if (shop) {
       const shopWithComponents = shop as ShopWithComponents;
-      setFormData({
-        name: shop.name || "",
-        pathName: shop.pathName || "",
-        description: shop.description || "",
-        images: (shop.images as Prisma.JsonArray) || [],
-      });
 
       // Récupération des styleComponents si ils n'existent pas déjà
       if (!shopWithComponents.styleComponents) {
@@ -59,24 +51,6 @@ const ShopEditor = ({ onSave }: ShopEditorProps) => {
       }
     }
   }, [shop]);
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const updatedShop = {
-      ...formData,
-    };
-    await onSave(updatedShop);
-  };
 
   const addComponent = async (type: string) => {
     let details: any = {};
@@ -131,6 +105,7 @@ const ShopEditor = ({ onSave }: ShopEditorProps) => {
         return [data];
       });
       setEditingComponent(data.id);
+      setSelectedComponent(data);
     } catch (error) {
       console.error("Error creating style component:", error);
     }
@@ -178,6 +153,7 @@ const ShopEditor = ({ onSave }: ShopEditorProps) => {
       setStyleComponents((prev) => prev.filter((comp) => comp.id !== id));
       if (editingComponent === id) {
         setEditingComponent(null);
+        setSelectedComponent(null);
       }
     } catch (error) {
       console.error("Error deleting style component:", error);
@@ -185,14 +161,12 @@ const ShopEditor = ({ onSave }: ShopEditorProps) => {
   };
 
   const toggleComponentEdit = (id: string) => {
+    console.log(id, "id");
     setEditingComponent(editingComponent === id ? null : id);
+    setSelectedComponent(
+      styleComponents.find((comp) => comp.id === id) || null
+    );
   };
-
-  let selectedComponent: StyleComponent | null = null;
-  if (styleComponents && styleComponents.length > 0) {
-    selectedComponent =
-      styleComponents.find((comp) => comp.id === editingComponent) || null;
-  }
 
   // Fonction pour mettre à jour l'ordre des composants
   const updateComponentsOrder = async (newOrder: StyleComponent[]) => {
@@ -222,6 +196,39 @@ const ShopEditor = ({ onSave }: ShopEditorProps) => {
     }
   };
 
+  const editionComponent = (component: StyleComponent) => {
+    console.log(component, "component");
+    if (component) {
+      return (
+        <div className="sticky top-6 bg-white rounded-lg shadow-lg p-4">
+          <div className="flex justify-between items-center mb-4">
+            <h4 className="text-lg font-medium">
+              {component.name === "text" ? "Éditer le texte" : component.name}
+            </h4>
+            <button
+              type="button"
+              onClick={() => {
+                setEditingComponent(null);
+                setSelectedComponent(null);
+              }}
+              className="text-gray-400 hover:text-gray-500"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          {component.name === "text" && (
+            <TextComponent
+              initialData={component.details as any}
+              onUpdate={(data) => updateComponent(component.id, data)}
+              shopId={shop?.id || ""}
+            />
+          )}
+        </div>
+      );
+    }
+  };
+
   // Fonction pour déplacer un composant vers le haut
   const moveComponentUp = (index: number) => {
     if (index === 0) return;
@@ -246,62 +253,7 @@ const ShopEditor = ({ onSave }: ShopEditorProps) => {
 
   return (
     <div className="max-w-7xl mx-auto p-6">
-      <form onSubmit={handleSubmit} className="space-y-8">
-        <div className="space-y-6">
-          <div>
-            <label
-              htmlFor="name"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Nom de la boutique
-            </label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-              required
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="pathName"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Chemin d'accès
-            </label>
-            <input
-              type="text"
-              id="pathName"
-              name="pathName"
-              value={formData.pathName}
-              onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-              required
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="description"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Description
-            </label>
-            <textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              rows={4}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-            />
-          </div>
-        </div>
-
+      <form className="space-y-8">
         <div className="border-t pt-8">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-lg font-medium">Contenu de la boutique</h3>
@@ -408,32 +360,7 @@ const ShopEditor = ({ onSave }: ShopEditorProps) => {
 
             <div className="col-span-1">
               {editingComponent && selectedComponent ? (
-                <div className="sticky top-6 bg-white rounded-lg shadow-lg p-4">
-                  <div className="flex justify-between items-center mb-4">
-                    <h4 className="text-lg font-medium">
-                      {selectedComponent.name === "text"
-                        ? "Éditer le texte"
-                        : selectedComponent.name}
-                    </h4>
-                    <button
-                      type="button"
-                      onClick={() => setEditingComponent(null)}
-                      className="text-gray-400 hover:text-gray-500"
-                    >
-                      <X className="h-5 w-5" />
-                    </button>
-                  </div>
-
-                  {selectedComponent.name === "text" && (
-                    <TextComponent
-                      initialData={selectedComponent.details as any}
-                      onUpdate={(data) =>
-                        updateComponent(selectedComponent.id, data)
-                      }
-                      shopId={shop?.id || ""}
-                    />
-                  )}
-                </div>
+                editionComponent(selectedComponent)
               ) : (
                 <div className="text-center text-gray-500 p-4">
                   Sélectionnez un composant pour l'éditer
@@ -441,15 +368,6 @@ const ShopEditor = ({ onSave }: ShopEditorProps) => {
               )}
             </div>
           </div>
-        </div>
-
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          >
-            {shop ? "Mettre à jour" : "Créer"}
-          </button>
         </div>
       </form>
     </div>

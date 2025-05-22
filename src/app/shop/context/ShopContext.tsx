@@ -43,7 +43,7 @@ export function ShopProvider({
     if (!shop) return;
     const link = await fetch(`/api/v1/shops/${shop.id}/links`);
     const data = await link.json();
-    setLinks(data);
+    setLinks(data.data);
   };
 
   useEffect(() => {

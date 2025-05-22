@@ -12,6 +12,7 @@ import {
   Users,
   Table,
   Link,
+  Info,
 } from "lucide-react";
 import {
   createContext,
@@ -47,6 +48,11 @@ const NavigationContext = createContext<NavigationContextType | undefined>(
 const STORAGE_KEY = "navigation_state";
 
 const navigationSections = [
+  {
+    id: "informations",
+    title: "Informations",
+    icon: <Info className="h-5 w-5" />,
+  },
   {
     id: "edition",
     title: "Édition",

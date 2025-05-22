@@ -21,6 +21,7 @@ const TextComponent = ({
   onUpdate,
   shopId,
 }: TextComponentProps) => {
+  console.log(initialData, "initialData");
   const [data, setData] = useState(
     initialData || {
       text: "Votre texte ici",
@@ -33,6 +34,12 @@ const TextComponent = ({
   );
   const [links, setLinks] = useState<Link[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (initialData) {
+      setData(initialData);
+    }
+  }, [initialData]);
 
   useEffect(() => {
     const fetchLinks = async () => {
